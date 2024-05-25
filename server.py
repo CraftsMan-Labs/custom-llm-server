@@ -1,8 +1,9 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response, stream_with_context
 from pyngrok import ngrok
 from dotenv import load_dotenv
 import ollama
+import asyncio
 
 # Load environment variables from .env file
 load_dotenv()
@@ -11,29 +12,30 @@ load_dotenv()
 OLLAMA_ENDPOINT = "http://localhost:11434"
 
 # Function to interact with the Ollama model
-def query_ollama(model, prompt):
+async def query_ollama(model, prompt, stream=False):
     response = ollama.chat(
         model=model,
-        messages=[{'role': 'user', 'content': prompt}]
+        messages=[{'role': 'user', 'content': prompt}],
+        stream=stream
     )
-    return response['message']['content']
+    return response
 
 # Set up LiteLLM to handle requests
 def lite_llm_server():
     app = Flask(__name__)
 
     @app.route('/generate', methods=['POST'])
-    def generate():
+    async def generate():
         data = request.json
-        model = data.get('model', 'llama2')
+        model = data.get('model', 'llama3')
         prompt = data.get('prompt', '')
 
         if not prompt:
             return jsonify({'error': 'No prompt provided'}), 400
 
         try:
-            response = query_ollama(model, prompt)
-            return jsonify({'response': response})
+            response = await query_ollama(model, prompt)
+            return jsonify({'response': response['message']['content']})
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
