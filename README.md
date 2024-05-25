@@ -91,7 +91,7 @@ NGROK_AUTHTOKEN=your-ngrok-authtoken
 
 ## Future Projects
 
-Stay tuned for more projects showcasing the capabilities of this setup. We will explore various applications and enhancements to make the most out of your custom AI server.
+Stay tuned for more projects showcasing the capabilities of this setup. We will explore various custom opensource based swarm ai agents and enhancements to make the most out of your custom AI server which will all run locally on your device.
 
 ## Contributing
 
