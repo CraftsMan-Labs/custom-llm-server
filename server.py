@@ -2,53 +2,51 @@ import os
 from flask import Flask, request, jsonify, Response, stream_with_context
 from pyngrok import ngrok
 from dotenv import load_dotenv
-import ollama
-import asyncio
+from litellm import completion
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Ensure the Ollama server is running on localhost
-OLLAMA_ENDPOINT = "http://localhost:11434"
-
-# Function to interact with the Ollama model
-async def query_ollama(model, prompt, stream=False):
-    response = ollama.chat(
-        model=model,
-        messages=[{'role': 'user', 'content': prompt}],
-        stream=stream
+async def query_litellm(model, prompt, stream=False, system_prompt = ''):
+    response = completion(
+        model="ollama_chat/"+model,
+        messages=[
+            {
+                "content": system_prompt,
+                "role": "system"
+            },
+            { 
+                "content": prompt, 
+                "role": "user"
+             }],
     )
     return response
 
-# Set up LiteLLM to handle requests
 def lite_llm_server():
     app = Flask(__name__)
 
     @app.route('/generate', methods=['POST'])
     async def generate():
         data = request.json
-        model = data.get('model', 'llama3')
+        model = data.get('model', 'phi3')
         prompt = data.get('prompt', '')
+        system_prompt = data.get('system_prompt', '')
 
         if not prompt:
             return jsonify({'error': 'No prompt provided'}), 400
 
         try:
-            response = await query_ollama(model, prompt)
-            return jsonify({'response': response['message']['content']})
+            response = await query_litellm(model, prompt, system_prompt)
+            return jsonify(response.json())
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
     return app
 
 if __name__ == "__main__":
-    # Start the Flask app
     app = lite_llm_server()
-    
-    # Get the ngrok authtoken from the environment variable
+
     ngrok_authtoken = os.getenv("NGROK_AUTHTOKEN")
     
-    # Set up ngrok tunnel
     if ngrok_authtoken:
         ngrok.set_auth_token(ngrok_authtoken)
         public_url = ngrok.connect(8000)
