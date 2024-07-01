@@ -6,9 +6,16 @@ from litellm import completion
 
 load_dotenv()
 
-async def query_litellm(model, prompt, stream=False, system_prompt = ''):
+async def query_litellm(model, prompt, 
+                        stream=False, 
+                        system_prompt = '', 
+                        max_tokens = 1024, 
+                        format_json = False,
+                        temperature = 0.5,
+                        top_p = 1.0,
+                        ):
     response = completion(
-        model="ollama_chat/"+model,
+        model="ollama/"+model,
         messages=[
             {
                 "content": system_prompt,
@@ -18,6 +25,9 @@ async def query_litellm(model, prompt, stream=False, system_prompt = ''):
                 "content": prompt, 
                 "role": "user"
              }],
+        max_tokens=max_tokens,
+        temperature=temperature,
+        top_p=top_p,
     )
     return response
 
